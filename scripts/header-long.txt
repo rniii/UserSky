@@ -1,4 +1,4 @@
-rinisky, a client modification for the bluesky app
+UserSky, a client modification for Bluesky
 Copyright (c) {year} {author}
 
 This program is free software: you can redistribute it and/or modify it under

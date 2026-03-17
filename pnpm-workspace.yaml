@@ -1,3 +1,7 @@
+packages:
+  - plugins/
+
 onlyBuiltDependencies:
   - dprint
+  - esbuild
   - eslint

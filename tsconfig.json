@@ -1,12 +1,12 @@
 {
-  "compilerOptions": {
-    "strict": true,
-    "verbatimModuleSyntax": true,
-    "baseUrl": "./src",
-    "jsx": "preserve",
-    "module": "ESNext",
-    "moduleResolution": "bundler",
-    "noEmit": true,
-    "target": "ESNext"
-  }
+    "compilerOptions": {
+        "allowImportingTsExtensions": true,
+        "strict": true,
+        "verbatimModuleSyntax": true,
+        "jsx": "preserve",
+        "module": "esnext",
+        "moduleResolution": "nodenext",
+        "noEmit": true,
+        "target": "ESNext"
+    }
 }
