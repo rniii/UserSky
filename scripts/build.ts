@@ -32,7 +32,7 @@ const banner = userscriptBanner({
     match: [
         "https://bsky.app/*",
         // "https://deer.social/*", FIXME older build with less module splitting. sad for snitching modules
-        // "https://blacksky.community/*", FIXME different webpack settings
+        "https://blacksky.community/*",
         "https://witchsky.app/*",
         "https://*.bsky.dev/*",
     ],

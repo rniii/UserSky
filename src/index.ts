@@ -4,14 +4,17 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+import "./webpack/index.ts";
+
 import htm from "htm";
 
 import { withErrorBoundary } from "./components/ErrorBoundary.ts";
 import type { PluginDecl } from "./types.ts";
-import { Logger } from "./utils/logger.ts";
+import { Logger, useLogCounts } from "./utils/logger.ts";
 import { React } from "./webpack/common.ts";
-import { addPatch, findByPropsLazy, ModuleFinds, patchWebpack } from "./webpack/index.ts";
+import { addPatch, findByPropsLazy, patchWebpack } from "./webpack/index.ts";
 
+export * as Components from "./components/index.ts";
 export * as Utils from "./utils/index.ts";
 export * as Webpack from "./webpack/index.ts";
 
@@ -76,25 +79,26 @@ const { Text } = findByPropsLazy("Span", "Text", "H1");
 declarePlugin({
     name: "Core",
     patches: [{
-        find: ModuleFinds.Navigator,
-        replacement: [
-            {
-                match: re`\(\i\)=!\i&&\i&&(0,\i.jsx)(\I,{style:[\I.w_full,{height:32}],\.\{100,300\}children:[\(\i,\)\{3,\}\1\(\?=]\)`,
-                replace: "$&,$self.renderNavFooter()",
-            },
-        ],
+        find: ["routeName:", "hasSession:", ".useGutters"],
+        replacement: {
+            match: re`\(\i\)=!\i&&\i&&(0,\i.jsx)(\I,{style:[\I.w_full,{height:32}],\.\{100,300\}children:[\(\i,\)\{3,\}\1\(\?=]\)`,
+            replace: "$&,$self.renderNavFooter()",
+        },
     }],
 
     renderNavFooter: withErrorBoundary(() => {
         const t = useTheme();
+        const { errors, warnings } = useLogCounts();
 
         return html`<${React.Fragment}>
             <${Text} style=${[t.atoms.text_contrast_medium]}>
                 UserSky
             <//>
-            <${Text} style=${[{ color: t.palette.yellow }]}>
-                AAhhh!! warning!!!!!!!!!!!!
-            <//>
+            ${errors || warnings
+                ? html`<${Text} style=${[{ color: errors ? t.palette.negative_400 : t.palette.yellow }]}>
+                    ${errors && `${errors} error(s) and `}${warnings} warning(s) in console
+                <//>`
+                : null}
         <//>`;
     }),
 });

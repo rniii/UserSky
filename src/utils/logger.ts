@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+import { React } from "../webpack/common.ts";
+
 type Level = "error" | "warn" | "info" | "log" | "debug";
 
 const logCounts = {
@@ -11,20 +13,16 @@ const logCounts = {
     errors: 0,
 };
 
-export function getLogCounts() {
-    return logCounts;
-}
-
 export class Logger {
     constructor(public name: string, public color = "#ddd") {}
 
     error(...args: any[]) {
-        logCounts.errors++;
+        logCounts.errors++, dispatchLogState();
         this._log("#faa", "error", ...args);
     }
 
     warn(...args: any[]) {
-        logCounts.warnings++;
+        logCounts.warnings++, dispatchLogState();
         this._log("#ffa", "warn", ...args);
     }
 
@@ -52,3 +50,19 @@ export class Logger {
         );
     }
 }
+
+export function useLogCounts() {
+    const [, forceUpdate] = React.useReducer(() => ({}), {});
+
+    React.useEffect(() => {
+        eventTarget.addEventListener("log", forceUpdate);
+
+        return () => eventTarget.removeEventListener("log", forceUpdate);
+    }, []);
+
+    return logCounts;
+}
+
+const eventTarget = new EventTarget();
+const dispatchLogState = () => eventTarget.dispatchEvent(new CustomEvent("log"));
+

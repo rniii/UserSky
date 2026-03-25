@@ -4,5 +4,4 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-export * from "./lazy.ts";
-export { Logger } from "./logger.ts";
+export * from "./ErrorBoundary.ts";

@@ -4,8 +4,22 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-export function makeLazyProxy<T extends object>(get: () => T | undefined): T {
+import { Logger } from "./logger.ts";
+
+const logger = new Logger("Utils");
+
+export function lazy<T extends object>(get: () => T | undefined): () => T {
     let cached: any;
+
+    return function () {
+        if (cached !== undefined) return cached;
+        if ((cached = get()) !== undefined) return logger.debug(get, cached), cached;
+
+        logger.warn(get, "is undefined");
+    };
+}
+
+export function makeLazyProxy<T extends object>(get: () => T | undefined): T {
     let sameTick = true;
     setTimeout(() => sameTick = false);
 
@@ -19,9 +33,7 @@ export function makeLazyProxy<T extends object>(get: () => T | undefined): T {
         } });
     }
 
-    return inner(function () {
-        return cached ??= get();
-    });
+    return inner(lazy(get));
 }
 
 const lazyHandler: ProxyHandler<any> = {};

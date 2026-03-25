@@ -8,6 +8,8 @@ import type { Replacement, WebpackFactory, WebpackRequire } from "../types.ts";
 import { makeLazyProxy } from "../utils/lazy.ts";
 import { Logger } from "../utils/logger.ts";
 
+export * as Common from "./common.ts";
+
 const logger = new Logger("Webpack", "#8ed6fb");
 
 export let wreq: WebpackRequire; // aka __webpack_require__
@@ -142,6 +144,9 @@ function patchFactory(
         }
 
         try {
+            // `80085(e, t, n)` -> `function(e, t, n)`
+            if (!/^function |^\(/.test(code)) code = "function" + code.slice(code.indexOf("("));
+
             factory = (0, eval)(
                 `// Module ${String(moduleId)} - patched by ${patchedBy}\n`
                 + `0,${code}\n`
