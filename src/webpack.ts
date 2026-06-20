@@ -27,10 +27,26 @@ export function findModuleLazy(filter: (exports: any) => boolean) {
 }
 
 export function findByPropsLazy(...properties: string[]) {
-    const filter = (e: any) => e && typeof e == "object" && properties.every(p => Object.hasOwn(e, p));
-    filter.properties = properties;
+    const filter = (e: any) => (
+        e && typeof e == "object" && properties.every(p => Object.hasOwn(e, p))
+    );
 
-    return findModuleLazy(filter);
+    return findModuleLazy(Object.assign(filter, { properties }));
+}
+
+export function sfcScannowReal(...find: string[]) {
+    const modules = wreq.m;
+
+    let result;
+    for (const moduleId in modules) {
+        if (find.every(f => Function.prototype.toString.call(modules[moduleId]).includes(f))) {
+            if (result) console.warn("duplicate result", result);
+
+            result = modules[moduleId];
+        }
+    }
+
+    return result;
 }
 
 export type RawPatch = {
