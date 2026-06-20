@@ -52,12 +52,6 @@ importers:
         specifier: ^8.57.0
         version: 8.57.0(eslint@9.39.4)(typescript@5.9.3)
 
-  plugins:
-    dependencies:
-      usersky:
-        specifier: workspace:^
-        version: link:..
-
 packages:
 
   '@babel/code-frame@7.29.0':

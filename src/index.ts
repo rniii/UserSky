@@ -4,19 +4,21 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import "./webpack/index.ts";
+import "./webpack.ts";
 
 import htm from "htm";
 
 import { withErrorBoundary } from "./components/ErrorBoundary.ts";
+import { React } from "./modules.ts";
 import type { PluginDecl } from "./types.ts";
 import { Logger, useLogCounts } from "./utils/logger.ts";
-import { React } from "./webpack/common.ts";
-import { addPatch, findByPropsLazy, patchWebpack } from "./webpack/index.ts";
+import { addPatch, findByPropsLazy, patchWebpack } from "./webpack.ts";
 
+export * as Bluesky from "./bluesky.ts";
 export * as Components from "./components/index.ts";
+export * as Modules from "./modules.ts";
 export * as Utils from "./utils/index.ts";
-export * as Webpack from "./webpack/index.ts";
+export * as Webpack from "./webpack.ts";
 
 const logger = new Logger("Main");
 

@@ -7,12 +7,12 @@
 import type { PropsWithChildren, ReactNode } from "react";
 
 import { html } from "../index.ts";
+import { React } from "../modules.ts";
 import { Logger } from "../utils/logger.ts";
-import { React } from "../webpack/common.ts";
 
 const logger = new Logger("ErrorBoundary", "#ca123d");
 
-type Props = { fallback?: ReactNode; };
+type Props = { fallback?: ReactNode };
 
 export function ErrorBoundary(props: PropsWithChildren<Props>) {
     class ErrorBoundaryInner extends React.Component<Props> {

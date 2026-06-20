@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import { React } from "../webpack/common.ts";
+import { React } from "../modules.ts";
 
 type Level = "error" | "warn" | "info" | "log" | "debug";
 

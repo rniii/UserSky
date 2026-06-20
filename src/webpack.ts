@@ -4,20 +4,13 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import type { Replacement, WebpackFactory, WebpackRequire } from "../types.ts";
-import { makeLazyProxy } from "../utils/lazy.ts";
-import { Logger } from "../utils/logger.ts";
-
-export * as Common from "./common.ts";
+import type { Replacement, WebpackFactory, WebpackRequire } from "./types.ts";
+import { makeLazyProxy } from "./utils/lazy.ts";
+import { Logger } from "./utils/logger.ts";
 
 const logger = new Logger("Webpack", "#8ed6fb");
 
 export let wreq: WebpackRequire; // aka __webpack_require__
-
-export const ModuleFinds = {
-    // src/Navigation.tsx
-    Navigator: ['.Screen,{name:"NotFound"'],
-} satisfies Record<string, string[]>;
 
 export function findModuleLazy(filter: (exports: any) => boolean) {
     return makeLazyProxy(() => {

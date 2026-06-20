@@ -4,14 +4,21 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import fs from "node:fs/promises";
+import { mkdir, rm, writeFile } from "node:fs/promises";
+import * as pathlib from "node:path";
 
-const MAIN_RE = RegExp('"(https://web-cdn.bsky.app/static/js/main.\\w+.js)"');
+console.log("Fetching https://bsky.app");
 
 const html = await fetch("https://bsky.app").then(r => r.text());
-const [, script] = html.match(MAIN_RE) ?? [];
-const js = await fetch(script).then(r => r.text());
 
-await fs.rm("dist/bsky", { recursive: true, force: true });
-await fs.mkdir("dist/bsky", { recursive: true });
-await fs.writeFile("dist/bsky/main.js", js);
+await rm("dist/bsky", { recursive: true, force: true });
+await mkdir("dist/bsky", { recursive: true });
+
+await Promise.all(html.matchAll(/https:\/\/web-cdn\.bsky\.app\/[^"']*\.js/g).map(async ([url]) => {
+    console.log(`Fetching ${url}`);
+
+    const filename = pathlib.basename(url);
+    const script = await fetch(url).then(r => r.text());
+
+    await writeFile(pathlib.join("dist/bsky", filename), script);
+}));
