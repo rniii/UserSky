@@ -4,8 +4,13 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+import { execSync } from "child_process";
 import { build, type BuildOptions, context } from "esbuild";
 
+const version = execSync("git describe --always", { encoding: "utf8" })
+    .replace(/^v/, "")
+    .replace(/-(\d+)-g/, "-git.$1+")
+    .trim();
 const watch = process.argv.includes("--watch") || process.argv.includes("-w");
 
 function userscriptBanner(meta: Record<string, string | string[]>) {
@@ -29,6 +34,10 @@ function userscriptBanner(meta: Record<string, string | string[]>) {
 
 const banner = userscriptBanner({
     name: "UserSky",
+    version,
+    description: "A client modification for Bluesky",
+    author: "rini (@rini.tngl.sh)",
+    namespace: "https://usersky.wisp.place",
     match: [
         "https://bsky.app/*",
         // "https://deer.social/*", FIXME older build with less module splitting. sad for snitching modules
