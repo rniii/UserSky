@@ -1,6 +1,6 @@
 {
     "name": "usersky",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "type": "module",
     "scripts": {
         "build": "node scripts/build.ts",
@@ -28,7 +28,8 @@
         "eslint-plugin-unused-imports": "^4.4.1",
         "htm": "^3.1.1",
         "typescript": "^5.9.3",
-        "typescript-eslint": "^8.57.0"
+        "typescript-eslint": "^8.57.0",
+        "vite": "^8.0.16"
     },
     "dependencies": {
         "@lingui/message-utils": "^5.9.3"
