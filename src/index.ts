@@ -24,7 +24,7 @@ const logger = new Logger("Main");
 
 export const Plugins: Record<string, PluginDecl> = {};
 
-export function declarePlugin<T extends PluginDecl>(plugin: T & Record<string, any>) {
+export function declarePlugin<T extends PluginDecl>(plugin: T) {
     if (plugin.name in Plugins) {
         logger.warn(`Conflicting plugin name: ${plugin.name}`);
     }
@@ -111,38 +111,12 @@ declarePlugin({
 
     patches: [
         {
-            find: "Failed to crop image", // state/gallery.ts
+            find: '"Failed to crop image"', // state/gallery.ts
             replacement: {
                 match: re`\(\i\)=\i.transformed||\i.source;`,
                 replace: "$&return $1;",
             },
         },
-        // TODO this patch that stops gluesky from turning ur images from a File to a data uri and back
-        // i swear my phone OOMs when i upload high res images
-        /* {
-            find: ['"text/plain"===', ".blobToDataUri"], // TextInput.web.tsx
-            replacement: {
-                match: re`\(\i\)=\i[\i],\i=\i.type\(\?=;if("text/plain"===\i)\i.getAsString\)`,
-                replace: '$&;$1.kind==="file"&&arguments[1]($1.getAsFile());continue',
-            }
-        },
-        {
-            find: ['.startsWith("data/video/")', ".SUPPORTED_MIME_TYPES"], // Composer.tsx
-            replacement: [
-                {
-                    match: re`\(\i\).startsWith("data:video/"")||\i.IS_WEB&&\i.startsWith("data:image/gif")`,
-                    replace: '$1.type.startsWith("video/")||$1.type==="image/gif"',
-                },
-                {
-                    match: re`[\(\i\)]=\(\i\).slice(5).split(";")`,
-                    replace: "$1=$2.type",
-                },
-                {
-                    match: re`\(\i\)=await fetch(\(\i\)).then(\i).then(\i=>new File([\i],\i,{type:\i}))`,
-                    replace: `$1=$2`,
-                }
-            ]
-        }, */
     ],
 });
 
@@ -174,7 +148,7 @@ declarePlugin({
     ],
 });
 
-if ("location" in globalThis && new URLSearchParams(location.search).get("vanilla")) {
+if ("location" in globalThis && new URLSearchParams(location.search).get("vanilla") != null) {
     throw "nevermind";
 }
 
