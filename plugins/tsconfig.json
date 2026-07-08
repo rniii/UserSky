@@ -8,9 +8,5 @@
         "moduleResolution": "bundler",
         "noEmit": true,
         "target": "ESNext"
-    },
-    "include": [
-        "src",
-        "scripts"
-    ]
+    }
 }
