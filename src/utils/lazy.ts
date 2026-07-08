@@ -11,12 +11,19 @@ const logger = new Logger("Utils");
 export function lazy<T extends object>(get: () => T | undefined): () => T {
     let cached: any;
 
-    return function () {
+    function resolve() {
         if (cached !== undefined) return cached;
-        if ((cached = get()) !== undefined) return logger.debug(get, cached), cached;
+        if ((cached = get()) !== undefined) return cached;
 
         logger.warn(get, "is undefined");
-    };
+    }
+
+    Object.defineProperty(resolve, "value", {
+        get: resolve,
+        configurable: true,
+    });
+
+    return resolve;
 }
 
 export function makeLazyProxy<T extends object>(get: () => T | undefined): T {
@@ -25,6 +32,8 @@ export function makeLazyProxy<T extends object>(get: () => T | undefined): T {
 
     function inner(target: () => T) {
         return new Proxy(target, { ...lazyHandler, get(target, key, receiver) {
+            if (key === Symbol.for("usersky.force")) return target();
+
             if (sameTick) return inner(function () {
                 return Reflect.get(target(), key, receiver);
             });
