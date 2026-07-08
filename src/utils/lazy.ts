@@ -26,6 +26,24 @@ export function lazy<T extends object>(get: () => T | undefined): () => T {
     return resolve;
 }
 
+const lazyHandler: ProxyHandler<any> = Object.fromEntries([
+    "apply",
+    "construct",
+    "defineProperty",
+    "deleteProperty",
+    "getOwnPropertyDescriptor",
+    "getPrototypeOf",
+    "has",
+    "isExtensible",
+    "ownKeys",
+    "preventExtensions",
+    "set",
+    "setPrototypeOf",
+].map(method => {
+    // @ts-expect-error don't worry about it
+    return [method, (target: any, ...args: any[]) => Reflect[method](target(), ...args)];
+}));
+
 export function makeLazyProxy<T extends object>(get: () => T | undefined): T {
     let sameTick = true;
     setTimeout(() => sameTick = false);
@@ -43,24 +61,4 @@ export function makeLazyProxy<T extends object>(get: () => T | undefined): T {
     }
 
     return inner(lazy(get));
-}
-
-const lazyHandler: ProxyHandler<any> = {};
-
-for (const method of [
-    "apply",
-    "construct",
-    "defineProperty",
-    "deleteProperty",
-    "getOwnPropertyDescriptor",
-    "getPrototypeOf",
-    "has",
-    "isExtensible",
-    "ownKeys",
-    "preventExtensions",
-    "set",
-    "setPrototypeOf",
-] as const) {
-    // @ts-expect-error don't worry about it
-    lazyHandler[method] = (target, ...args) => Reflect[method](target(), ...args);
 }

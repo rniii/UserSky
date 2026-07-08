@@ -4,8 +4,6 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import { React } from "../modules.ts";
-
 type Level = "error" | "warn" | "info" | "log" | "debug";
 
 const logCounts = {
@@ -14,7 +12,13 @@ const logCounts = {
 };
 
 export class Logger {
-    constructor(public name: string, public color = "#ddd") {}
+    name: string;
+    color: string;
+
+    constructor(name: string, color = "#ddd") {
+        this.name = name;
+        this.color = color;
+    }
 
     error(...args: any[]) {
         logCounts.errors++, dispatchLogState();
@@ -51,18 +55,9 @@ export class Logger {
     }
 }
 
-export function useLogCounts() {
-    const [, forceUpdate] = React.useReducer(() => ({}), {});
-
-    React.useEffect(() => {
-        eventTarget.addEventListener("log", forceUpdate);
-
-        return () => eventTarget.removeEventListener("log", forceUpdate);
-    }, []);
-
+export function getLogCounts() {
     return logCounts;
 }
 
-const eventTarget = new EventTarget();
+export const eventTarget = new EventTarget();
 const dispatchLogState = () => eventTarget.dispatchEvent(new CustomEvent("log"));
-
