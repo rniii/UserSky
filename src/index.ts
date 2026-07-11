@@ -53,6 +53,26 @@ export function declarePlugin<T extends PluginDecl>(plugin: T) {
     return Plugins[plugin.name] = plugin;
 }
 
+/**
+ * Inverted-escape regex template tag. Like `/normal/` but escapes are flipped:
+ * special regex chars are literal by default, and `\` makes them regex-active.
+ *
+ * - Unescaped `. * + ? ^ $ { ( [ ] ) } |` → **literal** in the regex
+ * - Escaped (`\.` `\+` `\(` `\[` etc) → **regex meaning** (inverted from normal)
+ * - `\i` → `[A-Za-z_$][\w_$]*` (identifier)
+ * - `\I` → `[A-Za-z_$][\w_$]*(\.[A-Za-z_$][\w_$]*)?` (dotted property path, one level)
+ * - `\\i` → unchanged (stays as `\\i` in the regex — literal backslash + i)
+ * - Other escapes like `\d` `\w` `\s` pass through as normal regex
+ * - `(?flags)` at the start sets regex flags
+ *
+ * @example
+ * re`foo.bar`     // /foo\.bar/ — dot is literal
+ * re`foo\.bar`    // /foo.bar/ — dot is regex (any char)
+ * re`\i\(\i\)`    // identifier then literal ( then identifier then literal )
+ * re`\(\i\)`      // capturing group around identifier
+ * re`\i??`        // identifier then two literal ? (JS nullish coalescing)
+ * re`(?g)\i`      // identifier with global flag
+ */
 export function re(template: TemplateStringsArray) {
     const special: Record<string, string> = {
         i: "[A-Za-z_$][\\w_$]*",
