@@ -5,7 +5,7 @@
  */
 
 import { React } from "../modules.ts";
-import { getLogCounts, eventTarget } from "./logger.ts";
+import { eventTarget, getLogCounts } from "./logger.ts";
 
 export function useLogCounts() {
     const logCounts = getLogCounts();

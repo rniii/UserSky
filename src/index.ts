@@ -12,7 +12,7 @@ import { withErrorBoundary } from "./components/ErrorBoundary.ts";
 import { React } from "./modules.ts";
 import type { PluginDecl } from "./types.ts";
 import { Logger } from "./utils/logger.ts";
-import { useLogCounts } from "./utils/logger-hook.ts";
+import { useLogCounts } from "./utils/loggerHook.ts";
 import { addPatch, findByPropsLazy, patchWebpack } from "./webpack.ts";
 
 export * as Bluesky from "./bluesky.ts";
@@ -143,7 +143,7 @@ declarePlugin({
                 {
                     match: re`\i.associated?.labeler&&\I.rounded_md`,
                     replace: "!1",
-                }
+                },
             ],
         },
     ],
