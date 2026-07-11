@@ -5,7 +5,8 @@
     "scripts": {
         "build": "node scripts/build.ts",
         "fetch-src": "node scripts/fetchSources.ts",
-        "lint": "eslint"
+        "lint": "eslint",
+        "lint-patches": "pnpm fetch-src && node scripts/lintPatches.ts"
     },
     "exports": {
         ".": "./src/index.ts",

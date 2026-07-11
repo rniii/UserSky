@@ -56,7 +56,7 @@ export type RawPatch = {
     matched?: keyof any;
 };
 
-const patches: RawPatch[] = [];
+export const patches: RawPatch[] = [];
 
 export function addPatch(patch: RawPatch) {
     patches.push(patch);
