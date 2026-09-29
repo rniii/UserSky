@@ -38,8 +38,8 @@ export function ErrorBoundary(props: PropsWithChildren<Props>) {
     return html`<${ErrorBoundaryInner} ...${props} />`;
 }
 
-export function withErrorBoundary(Component: React.ComponentType, props: Props = {}) {
-    return (componentProps: any) => html`<${ErrorBoundary} ...${props}>
+export function withErrorBoundary<T>(Component: React.ComponentType<T>, props: Props = {}) {
+    return (componentProps: T) => html`<${ErrorBoundary} ...${props}>
         <${Component} ...${componentProps} />
     <//>`;
 }

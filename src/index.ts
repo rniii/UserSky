@@ -8,12 +8,13 @@ import "./webpack.ts";
 
 import htm from "htm";
 
+import { Alf, Typography } from "./bluesky.ts";
 import { withErrorBoundary } from "./components/ErrorBoundary.ts";
 import { React } from "./modules.ts";
 import type { PluginDecl } from "./types.ts";
 import { Logger } from "./utils/logger.ts";
 import { useLogCounts } from "./utils/loggerHook.ts";
-import { addPatch, findByPropsLazy, patchWebpack } from "./webpack.ts";
+import { addPatch, patchWebpack } from "./webpack.ts";
 
 export * as Bluesky from "./bluesky.ts";
 export * as Components from "./components/index.ts";
@@ -25,7 +26,7 @@ const logger = new Logger("Main");
 
 export const Plugins: Record<string, PluginDecl> = {};
 
-export function declarePlugin<T extends PluginDecl>(plugin: T) {
+export function declarePlugin<T extends PluginDecl>(plugin: T & Record<string, any>) {
     if (plugin.name in Plugins) {
         logger.warn(`Conflicting plugin name: ${plugin.name}`);
     }
@@ -96,9 +97,6 @@ export function re(template: TemplateStringsArray) {
 
 export const html = htm.bind(React.createElement);
 
-const { useTheme } = findByPropsLazy("useAlf", "useTheme");
-const { Text } = findByPropsLazy("Span", "Text", "H1");
-
 declarePlugin({
     name: "Core",
     patches: [{
@@ -110,15 +108,15 @@ declarePlugin({
     }],
 
     renderNavFooter: withErrorBoundary(() => {
-        const t = useTheme();
+        const t = Alf.useTheme();
         const { errors, warnings } = useLogCounts();
 
         return html`<${React.Fragment}>
-            <${Text} style=${[t.atoms.text_contrast_medium]}>
+            <${Typography.Text} style=${[t.atoms.text_contrast_medium]}>
                 UserSky
             <//>
             ${errors || warnings
-                ? html`<${Text} style=${[{ color: errors ? t.palette.negative_400 : t.palette.yellow }]}>
+                ? html`<${Typography.Text} style=${[{ color: errors ? t.palette.negative_400 : t.palette.yellow }]}>
                     ${errors && `${errors} error(s) and `}${warnings} warning(s) in console
                 <//>`
                 : null}
