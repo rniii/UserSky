@@ -37,3 +37,40 @@ export interface WebpackRequire {
 
     (moduleId: keyof any): any;
 }
+
+export type MetroFactory<Exports = any> = (
+    global: any,
+    require: MetroRequire,
+    metroImportDefault: MetroRequire["importDefault"],
+    metroImportAll: MetroRequire["importAll"],
+    module: { exports: Exports },
+    exports: Exports,
+    dependencyMap: Record<number, keyof any> & { paths: Record<keyof any, string>; },
+) => void;
+
+export interface MetroModule<Exports = any> {
+    dependencyMap?: any[];
+    factory?: MetroFactory;
+    hasError: boolean;
+    importedAll: any;
+    importedDefault: any;
+    isInitialized: boolean;
+    publicModule: {
+        id?: keyof any;
+        exports?: Exports;
+    };
+}
+
+export interface MetroDeclare {
+    (factory: MetroFactory, moduleId: any, dependencyMap: any[]): void;
+}
+
+export interface MetroRequire {
+    importDefault: (moduleId: keyof any) => any;
+    importAll: (moduleId: keyof any) => any;
+    // context: () => never;
+    // resolveWeak: () => never;
+    // unguarded: any; // idk
+}
+
+export type AnyFactory = WebpackFactory | MetroFactory;

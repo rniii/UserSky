@@ -14,7 +14,7 @@ import { React } from "./modules.ts";
 import type { PluginDecl } from "./types.ts";
 import { Logger } from "./utils/logger.ts";
 import { useLogCounts } from "./utils/loggerHook.ts";
-import { addPatch, patchWebpack } from "./webpack.ts";
+import { addPatch, patchBundler } from "./webpack.ts";
 
 export * as Bluesky from "./bluesky.ts";
 export * as Components from "./components/index.ts";
@@ -102,7 +102,7 @@ declarePlugin({
     patches: [{
         find: ["routeName:", "hasSession:", ".useGutters"],
         replacement: {
-            match: re`\(\i\)=!\i&&\i&&(0,\i.jsx)(\I,{style:[\I.w_full,{height:32}],\.\{100,300\}children:[\(\i,\)\{3,\}\1\(\?=]\)`,
+            match: re`.jsx)(\I,{style:[\I.w_full,{height:32}],\.\{100,300\}children:[\i\(,\i\)\*`,
             replace: "$&,$self.renderNavFooter()",
         },
     }],
@@ -130,7 +130,7 @@ declarePlugin({
 
     patches: [
         {
-            find: '"Failed to crop image"', // state/gallery.ts
+            find: "Failed to crop image", // state/gallery.ts
             replacement: {
                 match: re`\(\i\)=\i.transformed||\i.source;`,
                 replace: "$&return $1;",
@@ -171,4 +171,4 @@ if ("location" in globalThis && new URLSearchParams(location.search).get("vanill
     throw "nevermind";
 }
 
-patchWebpack();
+patchBundler();

@@ -4,49 +4,55 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import type { Replacement, WebpackFactory, WebpackRequire } from "./types.ts";
+import type { AnyFactory, MetroDeclare, MetroModule, Replacement, WebpackRequire } from "./types.ts";
 import { makeLazyProxy } from "./utils/lazy.ts";
 import { Logger } from "./utils/logger.ts";
 
-const logger = new Logger("Webpack", "#8ed6fb");
+const logger = new Logger("Patcher", "#8ed6fb");
 
-export let wreq: WebpackRequire; // aka __webpack_require__
+type ModuleFilter<Exports = any> = (exports: Exports) => exports is Exports;
 
-export function findModuleLazy(filter: (exports: any) => boolean) {
-    return makeLazyProxy(() => {
-        const cache = wreq.c;
-
-        for (const moduleId in cache) {
-            if (filter(cache[moduleId].exports)) {
-                return cache[moduleId].exports;
-            }
-        }
-
-        logger.warn("no results for filter", filter);
-    });
+interface ModuleInfo<Exports = any> {
+    id: keyof any;
+    exports: Exports;
 }
 
-export function findByPropsLazy(...properties: string[]) {
-    const filter = (e: any) => (
+interface Bundler {
+    require(moduleId: keyof any): any;
+    findModule<E = any>(filter: ModuleFilter<E>): ModuleInfo<E> | null;
+}
+
+function explode(): never {
+    throw Error("Bundler is not patched.");
+}
+
+export let implementation: Bundler & Record<string, any> = {
+    require: explode,
+    findModule: explode,
+};
+
+export function findModule<E>(filter: ModuleFilter<E>) {
+    const mInfo = implementation.findModule(filter);
+
+    return mInfo ? mInfo.exports : null;
+}
+
+export function findModuleByProps<K extends string>(...properties: K[]) {
+    return findModule((e: any): e is Record<K, any> => (
         e && typeof e == "object" && properties.every(p => Object.hasOwn(e, p))
-    );
-
-    return findModuleLazy(Object.assign(filter, { properties }));
+    ));
 }
 
-export function sfcScannowReal(...find: string[]) {
-    const modules = wreq.m;
+export function findModuleLazy(filter: ModuleFilter) {
+    return makeLazyProxy(() => (
+        findModule(filter) ?? void logger.warn("no results for filter", filter)
+    ));
+}
 
-    let result;
-    for (const moduleId in modules) {
-        if (find.every(f => Function.prototype.toString.call(modules[moduleId]).includes(f))) {
-            if (result) console.warn("duplicate result", result);
-
-            result = modules[moduleId];
-        }
-    }
-
-    return result;
+export function findByPropsLazy<K extends string>(...properties: K[]) {
+    return makeLazyProxy(() => (
+        findModuleByProps(...properties) ?? void logger.warn("no results for properties", properties)
+    ));
 }
 
 export type RawPatch = {
@@ -63,28 +69,55 @@ export function addPatch(patch: RawPatch) {
 }
 
 function hookProperty(obj: any, prop: keyof any, desc: PropertyDescriptor & ThisType<any>) {
+    const original = Object.getOwnPropertyDescriptor(obj, prop);
+
     desc.configurable = true;
     Object.defineProperty(obj, prop, desc);
 
-    return () => Reflect.deleteProperty(obj, prop);
+    return () => original ? Object.defineProperty(obj, prop, original) : delete obj[prop];
 }
 
-export async function patchWebpack() {
-    const { promise, resolve } = Promise.withResolvers<void>();
+export async function patchBundler() {
+    return new Promise<void>((resolve, reject) => {
+        const unhookWebpack = hookWebpack(() => {
+            logger.log("Using patched webpack bundler");
 
-    const unhookM = hookProperty(Function.prototype, "m", {
-        set(factories) {
+            unhookMetro();
+            resolve();
+        });
+        const unhookMetro = hookMetro(() => {
+            logger.log("Using patched metro bundler");
+
+            unhookWebpack();
+            resolve();
+        });
+
+        addEventListener("load", () => reject(new Error("no bundler patched :(")));
+    });
+}
+
+function hookWebpack(resolve: () => void) {
+    const unhookModules = hookProperty(Function.prototype, "m", {
+        set(this: WebpackRequire, factories: WebpackRequire["m"]) {
             logger.debug("read if cute", factories);
 
-            unhookM();
+            unhookModules();
 
-            for (const moduleId in factories) patchFactory(factories, moduleId, factories[moduleId]);
+            for (const moduleId in factories) {
+                const patched = patchFactory(moduleId, factories[moduleId]);
 
-            this.m = new Proxy(factories, { set: handleNewFactory });
+                if (patched) factories[moduleId] = patched;
+            }
+
+            this.m = new Proxy(factories, { set: (factories, moduleId, newFactory, receiver) => {
+                const factory = patchFactory(moduleId, newFactory) ?? newFactory;
+
+                return Reflect.set(factories, moduleId, factory, receiver);
+            } });
 
             let cache: any;
             const cacheYoink = Symbol();
-            const unhookC = hookProperty(Object.prototype, cacheYoink, {
+            const unhookYoinker = hookProperty(Object.prototype, cacheYoink, {
                 get() {
                     // eslint-disable-next-line
                     cache = this;
@@ -95,41 +128,81 @@ export async function patchWebpack() {
 
             this(cacheYoink);
 
-            unhookC();
+            unhookYoinker();
             if (cache) delete cache[cacheYoink];
-
-            // Object.setPrototypeOf(cache, new Proxy({}, { set: handleSetCache }));
 
             this.c = cache; // *exports your internal*
 
-            // eslint-disable-next-line
-            wreq = this;
+            implementation = {
+                factories, cache, require: this,
+
+                findModule(filter) {
+                    for (const id in cache) {
+                        const exports = cache[id].exports;
+
+                        if (filter(exports)) return { id, exports };
+                    }
+
+                    return null;
+                },
+            };
+
             resolve();
         },
     });
 
-    return promise;
+    return unhookModules;
 }
 
-function handleNewFactory(
-    factories: WebpackRequire["m"],
-    moduleId: keyof any,
-    newFactory: WebpackFactory,
-    receiver: any,
-) {
-    if (patchFactory(factories, moduleId, newFactory)) {
-        return true;
-    }
+function hookMetro(resolve: () => void) {
+    let metroModules: Map<keyof any, MetroModule>;
 
-    return Reflect.set(factories, moduleId, newFactory, receiver);
+    const unhookDefine = hookProperty(globalThis, "__d", {
+        set(declare: MetroDeclare) {
+            unhookDefine();
+
+            implementation = {
+                modules: metroModules,
+                require: this.__r,
+
+                findModule(filter) {
+                    for (const [id, mInfo] of metroModules.entries()) {
+                        const exports = mInfo.publicModule?.exports;
+
+                        if (filter(exports)) return { id, exports };
+                    }
+
+                    return null;
+                },
+            };
+
+            const unhookClear = hookProperty(globalThis, "__c", {
+                set(clear: () => typeof metroModules) {
+                    unhookClear();
+
+                    this.__c = function () {
+                        return metroModules = clear.call(this);
+                    };
+                },
+            });
+
+            this.__d = function (this: any, factory, id, dependencyMap) {
+                // @ts-expect-error blehh
+                if (!metroModules) __c();
+
+                factory = patchFactory(id, factory) ?? factory;
+
+                declare.call(this, factory, id, dependencyMap);
+            } satisfies MetroDeclare;
+
+            resolve();
+        },
+    });
+
+    return unhookDefine;
 }
 
-function patchFactory(
-    factories: WebpackRequire["m"],
-    moduleId: keyof any,
-    factory: WebpackFactory,
-    receiver: any = factories,
-) {
+function patchFactory<F extends AnyFactory>(moduleId: keyof any, factory: F): F | undefined {
     let code = Function.prototype.toString.call(factory);
     const pending = patches.filter(p => p.find.every(f => code.includes(f)));
 
@@ -148,7 +221,11 @@ function patchFactory(
                 // @ts-expect-error overloads suck
                 code = code.replace(repl.match, repl.replace);
 
-                if (oldCode === code) logger.warn(patch.plugin + ": patch had no effect", repl);
+                if (oldCode === code) {
+                    logger.warn(`${patch.plugin}: patch had no effect\n`
+                        + `\tmatch: ${repl.match}\n`
+                        + `\treplace: ${repl.replace}`);
+                }
             }
         }
 
@@ -156,7 +233,7 @@ function patchFactory(
             // `80085(e, t, n)` -> `function(e, t, n)`
             if (!/^function |^\(/.test(code)) code = "function" + code.slice(code.indexOf("("));
 
-            factory = (0, eval)(
+            return (0, eval)(
                 `// Module ${String(moduleId)} - patched by ${patchedBy}\n`
                 + `0,${code}\n`
                 + `//# sourceURL=webpack://Webpack${String(moduleId)}`,
@@ -164,9 +241,5 @@ function patchFactory(
         } catch (e) {
             logger.warn(e, { code });
         }
-
-        return Reflect.set(factories, moduleId, factory, receiver);
     }
-
-    return false;
 }
