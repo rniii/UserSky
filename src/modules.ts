@@ -4,6 +4,6 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import { findByPropsLazy } from "./webpack.ts";
+import { findByPropsLazy } from "./bundler.ts";
 
 export const React = findByPropsLazy("createElement", "Fragment") as typeof import("react");

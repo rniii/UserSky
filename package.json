@@ -10,10 +10,10 @@
     "exports": {
         ".": "./src/index.ts",
         "./bluesky": "./src/bluesky.ts",
+        "./bundler": "./src/bundler.ts",
         "./components": "./src/components/index.ts",
         "./modules": "./src/modules.ts",
-        "./utils": "./src/utils/index.ts",
-        "./webpack": "./src/webpack/index.ts"
+        "./utils": "./src/utils/index.ts"
     },
     "devDependencies": {
         "@eslint/js": "^10.0.1",

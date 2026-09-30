@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import { findByPropsLazy } from "./webpack.ts";
+import { findByPropsLazy } from "./bundler.ts";
 
 // src/alf/index.tsx
 export const Alf = findByPropsLazy("useAlf", "useTheme");
